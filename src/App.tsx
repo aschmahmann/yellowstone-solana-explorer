@@ -1,8 +1,25 @@
-import { verifiedFetch } from '@helia/verified-fetch'
+import { createVerifiedFetch } from '@helia/verified-fetch'
+import { createHeliaHTTP } from '@helia/http'
 import { fileTypeFromBuffer } from '@sgtpooki/file-type'
 import { useCallback, useState } from 'react'
 import { Output } from './Output'
 import { helpText } from './constants'
+import { delegatedHTTPRouting, httpGatewayRouting } from '@helia/routers'
+import { trustlessGateway } from '@helia/block-brokers'
+
+const helia = await createHeliaHTTP({
+  routers: [
+    delegatedHTTPRouting('http://delegated-ipfs.dev'), // find peers from gateway
+    httpGatewayRouting(), // public gateway list
+    httpGatewayRouting({ // local/custom gateways
+      gateways: ['http://localhost:8080']
+    })
+  ],
+  blockBrokers: [
+    trustlessGateway(), // http fetching
+  ]
+})
+const verifiedFetch = await createVerifiedFetch(helia)
 
 function App (): JSX.Element {
   const [path, setPath] = useState<string>('')
